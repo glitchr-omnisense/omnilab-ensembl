@@ -42,10 +42,12 @@ Ensembl's data is free to use without restriction (EMBL-EBI's terms of use); cit
 show it. No key, no account. The REST API takes 15 requests a second and 55,000 an hour from one
 caller, answers 429 with a `Retry-After` beyond, and asks every call to say
 `Content-Type: application/json` (the source does, GETs included); the source leaves 0.07 s between
-two calls. The genomes whose ids are Ensembl's own (`ENS...`: the vertebrates, a few model
-organisms) only: Ensembl's REST API also serves the plants, yeasts and invertebrates of Ensembl
-Genomes, under their communities' ids (`AT5G10140`, `YAL001C`), which are not the core's `ensembl`
-scheme; a symbol that names one of them answers null.
+two calls. Ensembl's own ids (`ENS...`: the vertebrates) are the core's `ensembl` scheme; the
+genomes it serves under their communities' ids - the fly (`FBgn0000008`), the worm, the yeasts
+(`YAL001C`, `SPAC1002.01`), Arabidopsis (`AT5G10140`), rice, maize, wheat, Plasmodium, Anopheles -
+its `ensembl.genomes` scheme, read the same way, each asked with the genome its id's shape tells
+(a lookup without it took 7 to 23 s; another genome's id goes with its scheme,
+`ensembl.genomes:Solyc01g005000.3`, and is asked without).
 
 See [docs/](docs/index.md) for what is read, how it maps, and what Ensembl does not give here.
 

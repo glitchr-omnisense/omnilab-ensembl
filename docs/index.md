@@ -91,9 +91,15 @@ things, related.
 - Not read: the sequences (`sequence/id`), the variants, the homologues and the comparative
   genomics, the regulatory build, the transcripts' RefSeq and CCDS ids, the GO terms, Reactome,
   the protein's PDB chains (UniProt's structures are related things there).
-- The genomes of Ensembl Genomes (plants, yeasts, the fly, the worm), whose ids are their
-  communities' (`AT5G10140`, `YAL001C`, `FBgn0003996`): not the core's `ensembl` scheme, so a symbol
-  that names one is null.
+- The genomes whose ids are their communities' (the fly, the worm, the yeasts, the plants of
+  Ensembl Genomes: `FBgn0003996`, `YAL001C`, `AT5G10140`) are the core's `ensembl.genomes` scheme
+  (since 2026-10-15): read as Ensembl's own, a gene by its id or its symbol
+  (`drosophila_melanogaster/w`), each lookup and cross-reference call with the genome its shape
+  tells (`species=drosophila_melanogaster`): rest.ensembl.org serves Ensembl Genomes too (the old
+  rest.ensemblgenomes.org answers with another host's certificate), but without the species it took
+  7 to 23 s, or answered 500. An id of a genome the core does not know by its shape goes with its
+  scheme and is asked without the species. Their related transcripts, genes and proteins are kept
+  when the core knows their genome's shape (an LRG, a locus reference, never).
 
 ## The Collector
 
@@ -115,8 +121,15 @@ page and symbol, its cross-references (GeneID 3043, HGNC:4827 and its synonyms B
 CD113T-C, Swiss-Prot P68871 alone among five UniProt entries), its canonical transcript (three
 exons, 628 bp, 147 aa) and its protein (P68871 then D9YZU5); TP53 (GeneID 7157, P04637, synonyms LFS1
 and P53); an exon; the mouse genes of `Hbb-bs` (Hbb-bs, Hbb-bt) by `mouse/` and `mus_musculus/`;
-`p53` giving TP53; the zebrafish's `hbba1` (ENSDARG00000089087) and the fly's `w` (FBgn0003996,
-not an ENS id); an unknown id, an unknown symbol, an unknown species; Ensembl's rate headers
+`p53` giving TP53; the zebrafish's `hbba1` (ENSDARG00000089087); that evening, Ensembl slow
+(a lookup of HBB took 20 s), the community ids: the fly's `a` (FBgn0000008: GeneID 43852, its
+canonical transcript FBtr0071764, its protein FBpp0071678) and `w` by its symbol (FBgn0003996, GeneID
+31271, P10090), the budding yeast's YAL001C (TFC3, GeneID 851262, P34111) and YIL177W-A, the fission
+yeast's SPAC1002.01 and SPBC1105.02c, rice's Os01g0100100, maize's Zm00001eb000010, wheat's
+TraesCS1A02G000100, Plasmodium's PF3D7_0100100, Anopheles' AGAP000002, the worm's WBGene00000001,
+Arabidopsis' AT5G10140 (FLC) and its transcript AT5G10140.1 - Arabidopsis' lookups answered 500 a
+few hours later, an `UnavailableException`; the `Collector` from FBgn0000008 into NCBI Gene (two
+sources, `arc` from each, 21.5 s); an unknown id, an unknown symbol, an unknown species; Ensembl's rate headers
 (`x-ratelimit-limit: 55000` an hour). The fixtures in `Tests/Fixtures/` are its answers.
 
 Not verified: Ensembl's 429 (none met: the handling is the core's); the regulatory features (`R`) and

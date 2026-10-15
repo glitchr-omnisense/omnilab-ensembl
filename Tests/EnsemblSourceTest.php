@@ -24,7 +24,10 @@ use Symfony\Component\HttpClient\Response\MockResponse;
  * (ENST00000335295), its protein (ENSP00000333994) and its UniProt entries,
  * the lookup of the symbol HBB, the genomes of human and mouse, the genes
  * the symbol Hbb-bs names in the mouse and their batch lookup, and
- * Ensembl's 400 for an unknown id and an unknown symbol.
+ * Ensembl's 400 for an unknown id and an unknown symbol. That evening, the
+ * fly's gene a (FBgn0000008, FlyBase's id) asked with its species: its
+ * record, its cross-references, its Swiss-Prot proteins (none at the
+ * gene's levels), the fly's genome.
  */
 final class EnsemblSourceTest extends TestCase
 {
@@ -147,7 +150,7 @@ final class EnsemblSourceTest extends TestCase
         self::assertNull($this->source()->entity('ENSG00000000000'), 'Ensembl answers 400 "not found"');
         self::assertNull($this->source()->entity('NOTAGENE'), '400 "No valid lookup found for symbol"');
         self::assertNull($this->source()->entity(''));
-        self::assertNull($this->source(new MockResponse('{"id":"FBgn0003996","object_type":"Gene","display_name":"w","species":"drosophila_melanogaster","source":"FlyBase"}'))->entity('drosophila_melanogaster/w'), 'a genome of Ensembl Genomes keeps its community\'s ids: none of the ensembl scheme');
+        self::assertNull($this->source(new MockResponse('{"id":"LRG_1232","object_type":"Gene","display_name":"HBB","species":"homo_sapiens"}'))->entity('homo_sapiens/LRG-HBB'), 'a locus reference is no gene of Ensembl\'s');
     }
 
     public function testAnotherErrorIsNotNull(): void
@@ -211,5 +214,20 @@ final class EnsemblSourceTest extends TestCase
 
         $this->expectException(RateLimitedException::class);
         $this->source(new MockResponse('{"error":"You have exceeded the limit of 15 requests per second"}', ['http_code' => 429, 'response_headers' => ['Retry-After' => '1']]))->entity('ENSG00000244734');
+    }
+
+    public function testAFlyGeneByItsCommunitysId(): void
+    {
+        $gene = $this->source()->entity('FBgn0000008');
+
+        self::assertSame(['ensembl.genomes:FBgn0000008', 'a', 'gene'], [$gene?->id->key(), $gene?->label, $gene?->kind]);
+        self::assertSame('lookup/id/FBgn0000008?species=drosophila_melanogaster', $this->calls[0], 'the genome its shape tells: a lookup without it took 7 to 23 s');
+        self::assertContains('xrefs/id/FBgn0000008?species=drosophila_melanogaster', $this->calls);
+        self::assertSame(['ensembl.genomes:FBgn0000008', 'ncbi.gene:43852'], $gene->identifiers()->keys(), 'its NCBI Gene record, for the Collector');
+        self::assertSame('ncbi.taxon:7227', $gene->related('organism')->keys()[0]);
+        self::assertSame('ensembl.genomes:FBtr0071764', $gene->related('transcript')->keys()[0] ?? null, 'its canonical transcript, FlyBase\'s id too');
+        self::assertSame('Drosophila melanogaster', $gene->value('organism'));
+        self::assertSame('https://www.ensembl.org/id/FBgn0000008', $gene->url);
+        self::assertSame($gene->label, $this->source()->entity(Identifier::of(Scheme::ENSEMBL_GENOMES, 'fbgn0000008'))?->label, 'its scheme, its case aside');
     }
 }

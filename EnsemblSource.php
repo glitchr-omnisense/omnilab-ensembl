@@ -28,10 +28,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * for the Collector to follow; its species, gene, transcripts and protein
  * as related things; and the genes a symbol names in a species.
  *
- * The genomes whose ids are Ensembl's own (ENS..., the vertebrates and a
- * few model organisms) only: those Ensembl Genomes annotates under their
- * community's ids (AT5G10140, YAL001C, FBgn0000490) are none of the core's
- * ensembl scheme, and a symbol that names one is null.
+ * The genomes whose ids are Ensembl's own (ENS..., the vertebrates) are of
+ * the core's ensembl scheme; those Ensembl and Ensembl Genomes annotate
+ * under their community's ids (FBgn0000008, AT5G10140, YAL001C) of its
+ * ensembl.genomes scheme, read the same way, with the genome their shape
+ * tells (a lookup without it took 7 to 23 s on 2026-10-15).
  *
  * No key. Ensembl takes 15 calls a second (55,000 an hour), and asks every
  * call to say "Content-Type: application/json". A gene costs three calls
@@ -98,12 +99,12 @@ final class EnsemblSource extends HttpSource
     public function entity(Identifier|string $id): ?Entity
     {
         if ($id instanceof Identifier) {
-            return Scheme::ENSEMBL === $id->scheme ? $this->byId($id->value) : throw NotSupportedException::identifier('ensembl', (string) $id);
+            return \in_array($id->scheme, [Scheme::ENSEMBL, Scheme::ENSEMBL_GENOMES], true) ? $this->byId($id->value) : throw NotSupportedException::identifier('ensembl', (string) $id);
         }
         $text = trim($id);
         $identifier = Identifier::tryOf(Scheme::ENSEMBL, $text) ?? Identifier::parse($text);
         if (null !== $identifier) {
-            return Scheme::ENSEMBL === $identifier->scheme ? $this->byId($identifier->value) : throw NotSupportedException::identifier('ensembl', $id);
+            return \in_array($identifier->scheme, [Scheme::ENSEMBL, Scheme::ENSEMBL_GENOMES], true) ? $this->byId($identifier->value) : throw NotSupportedException::identifier('ensembl', $id);
         }
         if ('' === $text) {
             return null;
@@ -111,8 +112,7 @@ final class EnsemblSource extends HttpSource
         [$species, $symbol] = $this->symbol($text);
         $gene = $this->ask('lookup/symbol/'.rawurlencode($species).'/'.rawurlencode($symbol));
 
-        // A genome of Ensembl Genomes (a plant, a yeast, the fly) keeps its community's ids (AT5G10140), no ENS id: not served here.
-        return null === Identifier::tryOf(Scheme::ENSEMBL, $gene['id'] ?? null) ? null : $this->gene($gene);
+        return null === self::own($gene['id'] ?? null) ? null : $this->gene($gene);
     }
 
     /**
@@ -133,7 +133,7 @@ final class EnsemblSource extends HttpSource
         $ids = [];
         foreach ($this->ask('xrefs/symbol/'.rawurlencode($species).'/'.rawurlencode($symbol), ['object_type' => 'gene']) ?? [] as $match) {
             // Ensembl's genes only: an LRG (a locus reference) is no Ensembl id.
-            if (null !== ($gene = Identifier::tryOf(Scheme::ENSEMBL, $match['id'] ?? null))) {
+            if (null !== ($gene = self::own($match['id'] ?? null))) {
                 $ids[$gene->value] = $gene->value;
             }
         }
@@ -143,7 +143,7 @@ final class EnsemblSource extends HttpSource
         if (!$slice) {
             return new Page([], null, \count($ids));
         }
-        $records = $this->postForJson('lookup/id', ['ids' => $slice]) ?? [];
+        $records = $this->postForJson('lookup/id', ['ids' => $slice], null === Identifier::ensemblSpecies($slice[0]) ? [] : ['species' => $species]) ?? [];
         $entities = [];
         foreach ($slice as $gene) {
             if (\is_array($records[$gene] ?? null)) {
@@ -167,8 +167,8 @@ final class EnsemblSource extends HttpSource
 
     private function byId(string $id): ?Entity
     {
-        $kind = self::KINDS[preg_match('~^ENS[A-Z]*([EFGPRT])\d{11}$~', $id, $m) ? $m[1] : ''] ?? null;
-        $record = $this->ask('lookup/id/'.$id, 'transcript' === $kind ? ['expand' => 1] : []);
+        $kind = self::KINDS[preg_match('~^ENS[A-Z]*([EFGPRT])\d{11}$~', $id, $m) ? $m[1] : ''] ?? (preg_match('~^FBtr|^AT[1-5CM]G\d{5}\.\d+$~i', $id) ? 'transcript' : null);
+        $record = $this->ask('lookup/id/'.rawurlencode($id), ('transcript' === $kind ? ['expand' => 1] : []) + self::genomeOf($id));
         if (null === $record || !isset($record['id'])) {
             return null;
         }
@@ -210,7 +210,7 @@ final class EnsemblSource extends HttpSource
         $synonyms = [];
         if ($xrefs && $this->xrefs) {
             // The gene's own cross-references: its NCBI Gene record, the nomenclature committee's symbol and synonyms.
-            foreach ($this->ask('xrefs/id/'.$id) ?? [] as $xref) {
+            foreach ($this->ask('xrefs/id/'.rawurlencode($id), self::genomeOf($id)) ?? [] as $xref) {
                 $database = $xref['dbname'] ?? null;
                 if ('EntrezGene' === $database) {
                     $identifiers[] = Identifier::tryOf(Scheme::NCBI_GENE, $xref['primary_id'] ?? null);
@@ -224,14 +224,14 @@ final class EnsemblSource extends HttpSource
                 }
             }
             // Its proteins' reviewed UniProt entries: the gene's own list mixes them with the unreviewed ones, unordered.
-            foreach ($this->ask('xrefs/id/'.$id, ['all_levels' => 1, 'external_db' => 'Uniprot/SWISSPROT']) ?? [] as $xref) {
+            foreach ($this->ask('xrefs/id/'.rawurlencode($id), ['all_levels' => 1, 'external_db' => 'Uniprot/SWISSPROT'] + self::genomeOf($id)) ?? [] as $xref) {
                 $identifiers[] = Identifier::tryOf(Scheme::UNIPROT, $xref['primary_id'] ?? null);
             }
         }
         if (null !== $name && mb_strtolower($name) !== mb_strtolower($symbol)) {
             $synonyms = [mb_strtolower($name) => $name] + $synonyms;
         }
-        $transcript = Identifier::tryOf(Scheme::ENSEMBL, $r['canonical_transcript'] ?? null);
+        $transcript = self::own(rtrim((string) ($r['canonical_transcript'] ?? ''), '.'));
 
         return $this->toEntity($r, $symbol, 'gene', $name, $properties, $identifiers, $genome, array_values($synonyms), ['transcript' => $transcript]);
     }
@@ -253,8 +253,8 @@ final class EnsemblSource extends HttpSource
         $add('protein_length', 'Protein length', is_numeric($r['Translation']['length'] ?? null) ? new Quantity((int) $r['Translation']['length'], 'aa') : null);
 
         return $this->toEntity($r, self::text($r['display_name'] ?? null) ?? $id, 'transcript', null, $properties, [], $genome, [], [
-            'gene' => Identifier::tryOf(Scheme::ENSEMBL, $r['Parent'] ?? null),
-            'protein' => Identifier::tryOf(Scheme::ENSEMBL, $r['Translation']['id'] ?? null),
+            'gene' => self::own($r['Parent'] ?? null),
+            'protein' => self::own($r['Translation']['id'] ?? null),
         ]);
     }
 
@@ -268,7 +268,7 @@ final class EnsemblSource extends HttpSource
     private function translation(array $r): Entity
     {
         $id = (string) $r['id'];
-        $transcript = isset($r['Parent']) ? $this->ask('lookup/id/'.$r['Parent']) : null;
+        $transcript = isset($r['Parent']) ? $this->ask('lookup/id/'.rawurlencode((string) $r['Parent']), self::genomeOf((string) $r['Parent'])) : null;
         $genome = $this->genome((string) ($r['species'] ?? $this->species));
         // Its place: the coding part of its transcript, on its transcript's sequence.
         $properties = $this->located(['seq_region_name' => $transcript['seq_region_name'] ?? null, 'strand' => $transcript['strand'] ?? null, 'assembly_name' => $transcript['assembly_name'] ?? null] + $r, $genome, false);
@@ -278,7 +278,7 @@ final class EnsemblSource extends HttpSource
         $identifiers = [];
         if ($this->xrefs) {
             $reviewed = $unreviewed = [];
-            foreach ($this->ask('xrefs/id/'.$id, ['external_db' => 'Uniprot%']) ?? [] as $xref) {
+            foreach ($this->ask('xrefs/id/'.rawurlencode($id), ['external_db' => 'Uniprot%'] + self::genomeOf($id)) ?? [] as $xref) {
                 $accession = Identifier::tryOf(Scheme::UNIPROT, $xref['primary_id'] ?? null);
                 if ('Uniprot/SWISSPROT' === ($xref['dbname'] ?? null)) {
                     $reviewed[] = $accession;
@@ -294,8 +294,8 @@ final class EnsemblSource extends HttpSource
 
         // Ensembl names a protein by its id alone (its transcript's name is the transcript's).
         return $this->toEntity($r, $id, 'protein', null, $properties, $identifiers, $genome, [], [
-            'transcript' => Identifier::tryOf(Scheme::ENSEMBL, $r['Parent'] ?? null),
-            'gene' => Identifier::tryOf(Scheme::ENSEMBL, $transcript['Parent'] ?? null),
+            'transcript' => self::own($r['Parent'] ?? null),
+            'gene' => self::own($transcript['Parent'] ?? null),
         ]);
     }
 
@@ -362,7 +362,7 @@ final class EnsemblSource extends HttpSource
         $related['organism'] = Identifier::tryOf(Scheme::NCBI_TAXON, $genome['taxonomy_id'] ?? null);
 
         return new Entity(
-            id: Identifier::of(Scheme::ENSEMBL, $id),
+            id: self::own($id) ?? Identifier::of(Scheme::ENSEMBL_GENOMES, $id),
             label: $label,
             domain: Domain::BIOLOGY,
             kind: $kind,
@@ -374,6 +374,29 @@ final class EnsemblSource extends HttpSource
             source: 'ensembl',
             related: array_map(static fn (Identifier $i) => Identifiers::of($i), array_filter($related)),
         );
+    }
+
+    /** An id Ensembl gives: its own (ENS...), else a community's of a known genome (ensembl.genomes); null when neither. */
+    private static function own(mixed $id): ?Identifier
+    {
+        if (!\is_string($id) || '' === $id) {
+            return null;
+        }
+
+        // A community's id of a genome the core knows by its shape (an LRG, a locus reference, is none).
+        return Identifier::tryOf(Scheme::ENSEMBL, $id) ?? (null === Identifier::ensemblSpecies($id) ? null : Identifier::tryOf(Scheme::ENSEMBL_GENOMES, $id));
+    }
+
+    /**
+     * The species a lookup of a community's id names, when its shape tells
+     * it: rest.ensembl.org answers it in seconds, without it in 7 to 23 s
+     * or not at all (2026-10-15).
+     *
+     * @return array<string, string>
+     */
+    private static function genomeOf(string $id): array
+    {
+        return null === ($species = Identifier::ensemblSpecies($id)) ? [] : ['species' => $species];
     }
 
     /**
