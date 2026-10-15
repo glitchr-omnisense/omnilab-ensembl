@@ -132,8 +132,8 @@ few hours later, an `UnavailableException`; the `Collector` from FBgn0000008 int
 sources, `arc` from each, 21.5 s); an unknown id, an unknown symbol, an unknown species; Ensembl's rate headers
 (`x-ratelimit-limit: 55000` an hour). The fixtures in `Tests/Fixtures/` are its answers.
 
-Again on 2026-10-16, 08:29 to 08:41 JST (`.samples/live.php`, section 18, run three times, the
-third step by step): Ensembl answered, slowly and not always - `info/ping` took 9.9 s, a lookup 6 to
+Again on 2026-10-16, 08:29 to 08:41 JST (`.samples/live.php`, section 18, run four times, the
+last two step by step): Ensembl answered, slowly and not always - `info/ping` took 9.9 s, a lookup 6 to
 30 s, and calls answered 500 or 503 now and then (an `UnavailableException`), so no run passed
 whole. Every check passed in one run or another: HBB by its symbol and its versioned id, its GeneID
 and Swiss-Prot entry, its species and canonical transcript (HBB-201, three exons) and its protein
