@@ -1,6 +1,6 @@
 # omnilab/ensembl
 
-Ensembl for [glitchr/omnilab](https://github.com/glitchr-studio/omnilab): a gene, a transcript, a
+Ensembl for [omniscient/omnilab](https://github.com/glitchr-studio/omnilab): a gene, a transcript, a
 protein (Ensembl's translation) or an exon by its Ensembl id, or a gene by its symbol in a species;
 its symbol, name, biotype, species, assembly and place on the genome; a gene's NCBI Gene record and
 its reviewed UniProt proteins, a protein's UniProt entries, as cross-references for the Collector to
