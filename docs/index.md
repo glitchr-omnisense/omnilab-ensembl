@@ -1,5 +1,11 @@
 # omnilab/ensembl
 
+Ensembl's REST API (EMBL-EBI: `https://rest.ensembl.org/`) for
+[omnisense/omnilab](https://github.com/glitchr-omnisense/omnilab): genes, transcripts, proteins and
+exons by Ensembl id (and the genomes Ensembl Genomes serves under their communities' ids), genes by
+symbol in a species - biotype, species, assembly, place on the genome - with their NCBI Gene and
+UniProt cross-references, as entities; a search of symbols. No key.
+
 ## Installation
 
 ```sh
@@ -17,6 +23,46 @@ $ensembl = (new EnsemblSourceFactory($httpClient))->create([
 ```
 
 With the Symfony bundle, the factory is registered as `ensembl` (see the core's docs).
+
+## Credentials
+
+None: Ensembl's REST API takes no key and no account, within 15 requests a second and 55,000 an
+hour from one caller.
+
+## Options
+
+The factory's options, with the defaults it applies (`EnsemblSourceFactory`):
+
+| Option | Type | Default | Required | Effect |
+|---|---|---|---|---|
+| `species` | `string` | `homo_sapiens` | no | the species a symbol is looked up in when it names none (`mus_musculus/Hbb-bs` names its own) |
+| `xrefs` | `bool` | `true` | no | `entity()` reads a gene's or a protein's cross-references (NCBI Gene, UniProt, HGNC's synonyms): one or two calls more |
+| `mailto` | `?string` | null | no | a contact address, in the User-Agent: whom Ensembl writes to before it blocks a caller |
+| `user_agent` | `?string` | null | no | the whole User-Agent, in place of the one made from `mailto` |
+| `throttle` | `float` | `0.07` | no | seconds left between two calls: Ensembl takes 15 a second at most (55,000 an hour) |
+| `base_uri` | `string` | `https://rest.ensembl.org/` | no | the API the source calls |
+
+## Capabilities
+
+`capabilities()` answers `entity`, `search`, `cross_references`; an operation it does not answer throws `NotSupportedException` before any call.
+
+| Capability | Supported | |
+|---|---|---|
+| `entity` | yes | an Ensembl id, versioned or not (a gene, transcript, protein, exon, regulatory feature), an `ensembl.genomes` id (the fly, the worm, the yeasts, the plants...), or a symbol in the configured species or one named before it; another scheme refused before any call; up to four calls a gene |
+| `search` | yes | a symbol or `species/symbol`: the genes it names, its own or a synonym's, in Ensembl's order, 1,000 a page at most, paged by offset; a domain other than biology answers an empty page |
+| `series` | no |  |
+| `products` | no |  |
+| `occurrences` | no |  |
+| `datasets` | no |  |
+| `jobs` | no |  |
+| `open` | no |  |
+| `structure` | no |  |
+| `cross_references` | yes | a gene's NCBI GeneID and Swiss-Prot entries; its transcripts, proteins and gene are `related` |
+| `forecast` | no |  |
+| `historical` | no |  |
+| `area` | no |  |
+| `station` | no |  |
+| `cloud_cover` | no |  |
 
 ## Which API
 
@@ -114,6 +160,57 @@ Answered on 2026-10-15 (the core's `docs/merging.md` gives them whole):
   GeneID 3043, UniProt by P68871, Wikidata by the Ensembl id (P594: Q14905542, the HBB gene, a
   "protein-coding gene in the species Homo sapiens"); sources ensembl, ncbi, uniprot, wikidata.
 
+## Example
+
+```php
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+use Omnilab\Ensembl\EnsemblSourceFactory;
+use Omnilab\Model\Scheme;
+use Omnilab\Source\Query;
+use Symfony\Component\HttpClient\HttpClient;
+
+$ensembl = (new EnsemblSourceFactory(HttpClient::create(['timeout' => 60])))->create(['mailto' => 'you@example.org']);
+
+$hbb = $ensembl->entity('HBB');   // a symbol in the configured species, homo_sapiens
+echo $hbb->label, ' (', $hbb->id, '): ', $hbb->value('biotype'), ', ', $hbb->value('genomic_location'), "\n";
+echo '  NCBI Gene ', $hbb->identifier(Scheme::NCBI_GENE), ', UniProt ', $hbb->identifier(Scheme::UNIPROT), ', canonical transcript ', $hbb->value('canonical_transcript'), "\n";
+
+$fly = $ensembl->entity('FBgn0000008');   // the fly: the ensembl.genomes scheme
+echo $fly->label, ' (', $fly->id, '): ', $fly->value('organism'), ', NCBI Gene ', $fly->identifier(Scheme::NCBI_GENE), "\n";
+
+$page = $ensembl->search(new Query('mouse/Hbb-bs', limit: 5));
+printf("mouse/Hbb-bs: %s\n", implode(', ', array_map(static fn ($g) => $g->label.' '.$g->id->value, $page->items)));
+```
+
+```
+HBB (ensembl:ENSG00000244734): protein_coding, 11:5225464-5229395 (minus strand), GRCh38
+  NCBI Gene 3043, UniProt P68871, canonical transcript ENST00000335295.4
+a (ensembl.genomes:FBgn0000008): Drosophila melanogaster, NCBI Gene 43852
+mouse/Hbb-bs: Hbb-bt ENSMUSG00000073940, Hbb-bs ENSMUSG00000052305
+```
+
+(as answered on 2026-10-27: a dozen calls, 0.07 s apart; the HTTP client's timeout raised: Ensembl can be slow)
+
+```yaml
+# config/packages/omnilab.yaml
+omnilab:
+    sources:
+        ensembl: { factory: ensembl, options: { mailto: '%env(OMNILAB_MAILTO)%', species: homo_sapiens, xrefs: true } }
+```
+
+## Errors
+
+Every call goes through `HttpSource`: a 404 or a 410 (and a 204) is null - an empty page for a list -; a 429 is a `RateLimitedException` (`retryAfter` from `Retry-After`); a 5xx, a time-out or a host that does not answer an `UnavailableException`; any other 4xx a `ProviderException` with its `status` and what the service said; an answer that is not JSON a `ProviderException`, a web page answered for JSON an `UnavailableException`.
+
+Ensembl's own: an unknown id or symbol is its 400 saying "not found" or "No valid lookup found",
+read as null (any other 400 stays a `ProviderException`); a 429
+past its rate carries a `Retry-After` (`RateLimitedException::$retryAfter`); its 500s and 503s
+when it is slow are `UnavailableException`s. Before any call: an identifier of another scheme (a
+UniProt accession, a GeneID, a Wikidata item) (`NotSupportedException`).
+
 ## Verified, and not
 
 Against the real service on 2026-10-15 (release 116), without a key: HBB by its id, versioned id,
@@ -132,7 +229,7 @@ few hours later, an `UnavailableException`; the `Collector` from FBgn0000008 int
 sources, `arc` from each, 21.5 s); an unknown id, an unknown symbol, an unknown species; Ensembl's rate headers
 (`x-ratelimit-limit: 55000` an hour). The fixtures in `Tests/Fixtures/` are its answers.
 
-Again on 2026-10-16, 08:29 to 08:41 JST (`.samples/live.php`, section 18, run four times, the
+Again on 2026-10-16, 08:29 to 08:41 JST (the workspace's `.samples/live.php`, not published, section 18, run four times, the
 last two step by step): Ensembl answered, slowly and not always - `info/ping` took 9.9 s, a lookup 6 to
 30 s, and calls answered 500 or 503 now and then (an `UnavailableException`), so no run passed
 whole. Every check passed in one run or another: HBB by its symbol and its versioned id, its GeneID
@@ -143,5 +240,17 @@ from UniProt into Ensembl and from Ensembl into NCBI Gene, UniProt and Wikidata 
 item, Q14905542, by P594); the fly's `a` (FBgn0000008, GeneID 43852) and the budding yeast's
 YAL001C (TFC3, P34111). The service, not the package: nothing changed here.
 
+Again on 2026-10-27: HBB by its symbol (GeneID 3043, P68871, its canonical transcript), the fly's
+`FBgn0000008`, the mouse genes of `Hbb-bs` (the example above).
+
 Not verified: Ensembl's 429 (none met: the handling is the core's); the regulatory features (`R`) and
 protein families (`F`), read as generic features.
+
+## Responsibility
+
+This package is an independent, unofficial client: it is not affiliated with, endorsed by or
+sponsored by Ensembl or the EMBL-EBI. Ensembl's data are free to use without restriction (the
+EMBL-EBI's terms of use); cite Ensembl where they are shown, and keep to its rate, as the README's
+[Terms of use](https://github.com/glitchr-omnisense/omnilab-ensembl#terms-of-use) says. Whoever
+runs the package is responsible for any use made of what it returns: see the README's
+[Responsibility](https://github.com/glitchr-omnisense/omnilab-ensembl#responsibility) section.
