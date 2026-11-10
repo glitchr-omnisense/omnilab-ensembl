@@ -1,0 +1,271 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Binary operation "\." between ''Nomenclature id \('' and mixed results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''db_display_name'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''dbname'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''length'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''primary_id'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 4
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot access offset ''synonyms'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot cast mixed to int\.$#'
+			identifier: cast.int
+			count: 3
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 15
+			path: EnsemblSource.php
+
+		-
+			message: '#^Method Omnilab\\Ensembl\\EnsemblSource\:\:ask\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Method Omnilab\\Ensembl\\EnsemblSource\:\:genome\(\) should return array\<string, mixed\>\|null but returns array\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Method Omnilab\\Ensembl\\EnsemblSource\:\:symbol\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Method Omnilab\\Ensembl\\EnsemblSource\:\:toEntity\(\) has parameter \$r with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:feature\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:gene\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:gene\(\) expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:gene\(\) expects array\<string, mixed\>, array\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:transcript\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$r of method Omnilab\\Ensembl\\EnsemblSource\:\:translation\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$string of function rawurlencode expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#1 \$text of static method Omnilab\\Source\\HttpSource\:\:text\(\) expects string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 13
+			path: EnsemblSource.php
+
+		-
+			message: '#^Parameter \#2 \$value of static method Omnilab\\Model\\Identifier\:\:tryOf\(\) expects int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 4
+			path: EnsemblSource.php
+
+		-
+			message: '#^Property Omnilab\\Ensembl\\EnsemblSource\:\:\$genomes \(array\<string, array\<string, mixed\>\|null\>\) does not accept array\<string, array\|null\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: EnsemblSource.php
+
+		-
+			message: '#^Cannot cast mixed to float\.$#'
+			identifier: cast.double
+			count: 1
+			path: EnsemblSourceFactory.php
+
+		-
+			message: '#^Cannot cast mixed to string\.$#'
+			identifier: cast.string
+			count: 2
+			path: EnsemblSourceFactory.php
+
+		-
+			message: '#^Cannot access offset 0 on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$description on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$domain on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$id on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$identifiers on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$kind on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 3
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$label on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 4
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$source on Omnilab\\Model\\Property\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$synonyms on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot access property \$url on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: property.nonObject
+			count: 2
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot call method identifiers\(\) on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot call method property\(\) on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot call method related\(\) on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: method.nonObject
+			count: 10
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Cannot call method value\(\) on Omnilab\\Model\\Entity\|null\.$#'
+			identifier: method.nonObject
+			count: 26
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Method Omnilab\\Ensembl\\Tests\\EnsemblSourceTest\:\:source\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Offset 0 does not exist on array\{\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Parameter \#1 \$options of method Omnilab\\Source\\SourceFactory\:\:create\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringContainsString\(\) expects string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Tests/EnsemblSourceTest.php
+
+		-
+			message: '#^Property Omnilab\\Ensembl\\Tests\\EnsemblSourceTest\:\:\$headers \(list\<array\<string, mixed\>\>\) does not accept non\-empty\-list\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: Tests/EnsemblSourceTest.php

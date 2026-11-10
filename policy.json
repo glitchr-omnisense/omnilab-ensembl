@@ -1,0 +1,57 @@
+{
+    "$schema": "https://github.com/glitchr-omnisense/contracts/blob/1.x/resources/usage-policy.schema.json",
+    "provider": "ensembl",
+    "rateLimits": [
+        {
+            "max": 55000,
+            "window": "hour",
+            "every": 1,
+            "scope": "client-ip",
+            "operations": [],
+            "note": "Stated on the Ensembl REST wiki and sent as X-RateLimit-Limit 55000 / X-RateLimit-Period 3600; beyond: 429 with Retry-After (seconds, float), no call until it has passed."
+        },
+        {
+            "max": 15,
+            "window": "second",
+            "every": 1,
+            "scope": "client-ip",
+            "operations": [],
+            "note": "The wiki gives it as the average the hourly figure allows; the Ensembl REST paper (Yates et al., Bioinformatics 2015, PMC4271150) states a cap of 15 requests a second."
+        }
+    ],
+    "concurrency": null,
+    "rights": {
+        "commercial": "allowed",
+        "openSourceRequired": null,
+        "caching": {
+            "permission": "allowed",
+            "maxTtl": null
+        },
+        "storage": "allowed",
+        "redistribution": "allowed",
+        "attribution": {
+            "required": true,
+            "text": "Ensembl (EMBL-EBI); cite the current Ensembl paper",
+            "url": "https://www.ensembl.org/info/about/publications.html",
+            "where": [
+                "source"
+            ]
+        },
+        "licence": null
+    },
+    "requirements": {
+        "key": false,
+        "userAgent": {
+            "required": false,
+            "pattern": null
+        }
+    },
+    "provenance": {
+        "terms": "https://www.ensembl.org/info/about/legal/disclaimer.html",
+        "policy": "https://github.com/Ensembl/ensembl-rest/wiki/Rate-Limits",
+        "verifiedAt": "2026-11-10",
+        "declaredBy": "maintainer",
+        "contact": "https://www.ensembl.org/info/about/contact/",
+        "notes": "Read 2026-11-10: the REST wiki Rate-Limits page (per IP address, X-RateLimit-* headers, 429 + Retry-After), the live headers (X-RateLimit-Limit 55000, Period 3600), the Ensembl disclaimer (no restriction on access to or use of the data; third-party constraints may apply) and the EMBL-EBI terms of use (https://www.ebi.ac.uk/about/terms-of-use: attribution expected, usage that hinders the service gets blocked). attribution.required follows the EMBL-EBI terms; the disclaimer itself names no licence. The API asks for Content-Type: application/json on every call. www.ensembl.org/info/about/legal/disclaimer.html redirected (308) to jun2026.archive.ensembl.org, where it was read."
+    }
+}

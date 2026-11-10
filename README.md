@@ -51,6 +51,17 @@ its `ensembl.genomes` scheme, read the same way, each asked with the genome its 
 
 See [docs/](docs/index.md) for what is read, how it maps, and what Ensembl does not give here.
 
+## Usage policy
+
+Declared as data in [`policy.json`](policy.json) (read at https://github.com/Ensembl/ensembl-rest/wiki/Rate-Limits on 2026-11-10), and honoured on every request by the
+core: a limit reached waits when its window ends within `max_wait` seconds, else the request is not
+sent ([Usage policies](https://github.com/glitchr-omnisense/omnilab/blob/1.x/docs/policies.md)).
+
+- Limits: 55,000 a hour per client-ip; 15 a second per client-ip.
+- Licence: not stated; commercial use: allowed.
+- Credit: required: Ensembl (EMBL-EBI); cite the current Ensembl paper (https://www.ensembl.org/info/about/publications.html).
+- Needs: nothing.
+
 ## Responsibility
 
 This package is an independent, unofficial client: it is not affiliated with, endorsed by or
