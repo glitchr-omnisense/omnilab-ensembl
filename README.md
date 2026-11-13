@@ -36,6 +36,34 @@ With NCBI, UniProt and Wikidata configured too, the `Collector` goes both ways:
 Ensembl gene id they keep; `collect('ensembl', 'ENSG00000244734')` reaches NCBI Gene (3043),
 UniProt (P68871) and Wikidata's gene item (Q14905542, by P594).
 
+## Install and a first call
+
+```sh
+composer require omnilab/ensembl
+```
+
+A real call, with no account and no key: the human HBB gene in Ensembl. `mailto` is your address,
+sent in the User-Agent so that the service can reach you before it blocks a caller; the source keeps
+to the limits its [`policy.json`](policy.json) declares.
+
+```php
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+use Omnilab\Ensembl\EnsemblSourceFactory;
+
+$ensembl = (new EnsemblSourceFactory())->create(['mailto' => 'you@example.org']);   // your address, in the User-Agent
+$hbb = $ensembl->entity('ENSG00000244734');
+echo $hbb->label, ', ', $hbb->value('gene_name'), ', ', $hbb->value('genomic_location'), "\n";
+```
+
+Its output on 2026-11-13:
+
+```
+HBB, hemoglobin subunit beta, 11:5225464-5229395 (minus strand), GRCh38
+```
+
 ## Terms of use
 
 Ensembl's data is free to use without restriction (EMBL-EBI's terms of use); cite Ensembl where you
